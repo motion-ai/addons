@@ -1,5 +1,5 @@
 {
-  "name": "DCMARTIN Hass.io add-ons for Home Assistant",
-  "url": "https://github.com/dcmartin/hassio-addons",
+  "name": "Home-Assistant.io addons for motion-ai",
+  "url": "https://github.com/motion-ai/addons",
   "maintainer": "David C Martin <github@dcmartin.com>"
 }
