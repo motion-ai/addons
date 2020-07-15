@@ -1,4 +1,4 @@
-ARG BUILD_FROM=hassioaddons/ubuntu-base:5.0.2
+ARG BUILD_FROM=${BUILD_FROM}
 
 FROM $BUILD_FROM as build
 
@@ -35,7 +35,7 @@ RUN \
   && \
   curl -sSL https://www.python.org/ftp/python/3.7.7/Python-3.7.7.tgz -o python.tgz \
   && \
-  tar xzvf python.tgz \
+  tar xzf python.tgz \
   && \
   cd Python-3.7.7 \
   && \
@@ -88,8 +88,11 @@ RUN apt clean -qq -y && apt autoremove -qq -y && \
 
 FROM build as prereqs
 
+# dependency?
+RUN apt update -qq -y && apt install -qq -y libhdf5-dev
+
 # peerjs
-RUN pip3 install https://files.pythonhosted.org/packages/90/d5/1c4d2d79c1457f9aaf78e098331cb86533643680eeda0fcd6d63bd7e5ff8/peerjs-1.2.5-py3-none-any.whl 
+RUN pip3 install peerjs
 
 # specialization
 RUN if [ $(uname -m) = 'armv7l' ]; \
@@ -110,7 +113,7 @@ RUN  curl -sSL https://dl.google.com/coral/edgetpu_api/edgetpu_api_latest.tar.gz
   && \
   cd /tmp \
   && \
-  tar xzvf edgetpu_api.tar.gz
+  tar xzf edgetpu_api.tar.gz
 
 RUN \
   ARCH=$(uname -m) \
@@ -174,9 +177,6 @@ FROM prereqs
 ARG AMBIANIC_EDGE=/opt/ambianic-edge
 ENV AMBIANIC_EDGE ${AMBIANIC_EDGE}
 
-# Copy root filesystem
-COPY rootfs /
-
 # the meat
 RUN \
     mkdir -p ${AMBIANIC_EDGE} \
@@ -188,6 +188,9 @@ RUN \
     pip3 install -r build/requirements.txt \
     && \
     pip3 install -e src
+
+# Copy root filesystem
+COPY rootfs /
 
 CMD ["/usr/bin/run.sh"]
 
