@@ -49,7 +49,7 @@ RUN \
 RUN python3 --version
 
 # maximum
-RUN apt install -qq -y \
+RUN apt update -qq -y && apt install -qq -y \
   libgstreamer1.0-0 \
   gstreamer1.0-plugins-base \
   gstreamer1.0-plugins-good \
@@ -71,13 +71,28 @@ RUN apt install -qq -y \
   libopus-dev \
   libvpx-dev \
   libsrtp2-dev \
-  procps
+  procps \
+  udev \
+  libusb-1.0-0 \
+  libc++1 \
+  libc++abi1 \
+  libunwind8 \
+  libgcc1 \
+  git \
+  python3-pip \
+  libx264-dev \
+  libhdf5-dev \
+  software-properties-common
 
-RUN apt install -qq -y \
-  python3-pip
+## FFMPEG v4
 
-# pip
-RUN pip3 install --upgrade pip
+RUN add-apt-repository ppa:jonathonf/ffmpeg-4
+
+RUN apt update -qq -y \
+  && \
+  apt install -qq -y ffmpeg \
+  && \
+  apt upgrade -qq -y
 
 # cleanup
 RUN apt clean -qq -y && apt autoremove -qq -y && \
@@ -88,18 +103,68 @@ RUN apt clean -qq -y && apt autoremove -qq -y && \
 
 FROM build as prereqs
 
-# dependency?
-RUN apt update -qq -y && apt install -qq -y libhdf5-dev
+# pip
+RUN pip3 install --upgrade pip
+
+# wheel
+RUN pip3 install --upgrade wheel
+
+# gi
+RUN apt update -qq -y && apt install -qq -y libcairo2-dev libgirepository1.0-dev
+RUN pip3 install --upgrade pycairo
+RUN pip3 install --upgrade PyGObject
+
+# cython
+RUN pip3 install --upgrade cython
+
+# h5py
+RUN pip3 install --upgrade h5py
+
+# aiortc
+RUN pip3 install --upgrade aiortc
 
 # peerjs
-RUN pip3 install peerjs
+RUN pip3 install --upgrade peerjs
 
-# specialization
-RUN if [ $(uname -m) = 'armv7l' ]; \
-  then \
-    apt install -qq -y python3-rpi.gpio; \
-    cp /opt/ambianic-edge/build/raspberrypi.pip.conf /etc/pip.conf; \
-  fi
+RUN pip3 install 'Click>=7.0'
+RUN pip3 install 'Flask>=1.0.2'
+RUN pip3 install 'Jinja2>=2.10.1'
+RUN pip3 install 'Pillow>=5.4.1'
+RUN pip3 install 'PyYAML>=5.1.2'
+RUN pip3 install 'Werkzeug>=0.15.3'
+RUN pip3 install 'absl-py>=0.7.1'
+RUN pip3 install 'appdirs>=1.4.3'
+RUN pip3 install 'asn1crypto>=0.24.0'
+RUN pip3 install 'astor>=0.8.0'
+RUN pip3 install 'asttokens>=1.1.13'
+RUN pip3 install 'beautifulsoup4>=4.7.1'
+RUN pip3 install 'blinker>=1.4'
+RUN pip3 install 'certifi>=2018.8.24'
+RUN pip3 install 'chardet>=3.0.4'
+RUN pip3 install 'cookies>=2.2.1'
+RUN pip3 install 'cryptography>=2.8'
+RUN pip3 install 'decorator>=4.3.0'
+RUN pip3 install 'entrypoints>=0.3'
+RUN pip3 install 'flask-cors'
+RUN pip3 install 'gast>=0.2.2'
+RUN pip3 install 'google-pasta>=0.1.7'
+RUN pip3 install 'h5py>=2.9.0'
+RUN pip3 install 'idna>=2.6'
+RUN pip3 install 'itsdangerous>=0.24'
+RUN pip3 install 'numpy>=1.16.2'
+RUN pip3 install 'oauthlib>=2.1.0'
+RUN pip3 install 'pyOpenSSL>=19.0.0'
+RUN pip3 install 'requests-oauthlib>=1.0.0'
+RUN pip3 install 'requests>=2.21.0'
+RUN pip3 install 'responses>=0.9.0'
+RUN pip3 install 'simplegeneric>=0.8.1'
+RUN pip3 install 'simplejson>=3.16.0'
+RUN pip3 install 'webencodings>=0.5.1'
+RUN pip3 install 'inotify-simple'
+RUN pip3 install 'portalocker>=1.4.0'
+RUN pip3 install 'concurrent-log-handler'
+
+FROM prereqs as tflite
 
 ### TPU
 
@@ -141,18 +206,6 @@ RUN \
   ldconfig
 
 RUN \
-    apt update -qq -y \
-    && \
-    apt install -qq -y \
-     udev \
-     libusb-1.0-0 \
-     libc++1 \
-     libc++abi1 \
-     libunwind8 \
-     libgcc1 \
-     git
-
-RUN \
     mkdir -p /etc/udev/rules.d \
     && \
     cp /tmp/edgetpu_api/99-edgetpu-accelerator.rules /etc/udev/rules.d/99-edgetpu-accelerator.rules
@@ -171,19 +224,22 @@ RUN apt clean -qq -y && apt autoremove -qq -y && \
       /var/{cache,log}/* \
       /var/lib/apt/lists/*
 
-FROM prereqs
+FROM tflite
 
 # define reality
 ARG AMBIANIC_EDGE=/opt/ambianic-edge
 ENV AMBIANIC_EDGE ${AMBIANIC_EDGE}
 
 # the meat
-RUN \
-    mkdir -p ${AMBIANIC_EDGE} \
-    && \
-    cd ${AMBIANIC_EDGE} \
-    && \
-    git clone https://github.com/ambianic/ambianic-edge.git . \
+#RUN mkdir -p ${AMBIANIC_EDGE} \
+#      && \
+#      cd ${AMBIANIC_EDGE} \
+#      && \
+#      git clone http://github.com/dcmartin/ambianic-edge.git .
+
+copy ambianic-edge ${AMBIANIC_EDGE}
+
+RUN cd ${AMBIANIC_EDGE} \
     && \
     pip3 install -r build/requirements.txt \
     && \
@@ -191,6 +247,8 @@ RUN \
 
 # Copy root filesystem
 COPY rootfs /
+
+EXPOSE 8778
 
 CMD ["/usr/bin/run.sh"]
 

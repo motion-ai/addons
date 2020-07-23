@@ -4,7 +4,7 @@
   "slug": "ambianic",
   "description": "Ambianic Edge AI",
   "url": "https://github.com/dcmartin/hassio-addons/blob/master/ambianic/README.md",
-  "startup": "application",
+  "startup": "services",
   "boot": "auto",
   "arch": [
     "aarch64",
@@ -13,12 +13,13 @@
   ],
   "devices": [],
   "hassio_api": true,
-  "hassio_role": "default",
+  "hassio_role": "admin",
   "host_network": true,
+  "host_ipc": true,
+  "host_dbus": true,
   "homeassistant_api": false,
-  "privileged": [
-    "SYS_ADMIN"
-  ],
+  "full_access": false,
+  "udev": true,
   "timeout": 90,
   "tmpfs": "size=128m,uid=0,rw",
   "map": [
@@ -28,69 +29,132 @@
   "panel_icon": "mdi:cctv",
   "panel_title": "Ambianic Edge",
   "panel_admin": true,
+  "privileged": [
+    "NET_ADMIN",
+    "SYS_ADMIN",
+    "SYS_RAWIO",
+    "SYS_TIME",
+    "SYS_NICE",
+    "SYS_RESOURCE",
+    "SYS_PTRACE",
+    "SYS_MODULE",
+    "DAC_READ_SEARCH"
+  ],
   "ports": {
-    "8778/tcp": 8778
+    "3478/tcp": 3478,
+    "5004/tcp": 5004,
+    "8778/tcp": 8778,
+    "3478/udp": 3478,
+    "5004/udp": 5004,
+    "8778/udp": 8778
   },
   "ports_description": {
-    "8778/tcp": "API"
+    "3478/tcp": "I DONT KNOW",
+    "5004/tcp": "IF ANY PORTS",
+    "8778/tcp": "ARE NECESSARY",
+    "3478/udp": "BUT THEY ARE HERE",
+    "5004/udp": "JUST IN CASE",
+    "8778/udp": "THEY ARE NECESSARY"
   },
   "options": {
-    "log_level": "debug",
+    "log_level": "info",
     "workspace": "/data/ambianic",
     "ai_models": [
       {
-        "name": "entity_detection",
+        "name": "mobilenet_v2_coco",
         "type": "video",
+        "entity": "object",
         "top_k": 10,
-        "labels": "${AMBIANIC_EDGE}/ai_models/coco_labels.txt",
-        "tflite": "${AMBIANIC_EDGE}/ai_models/mobilenet_ssd_v2_coco_quant_postprocess.tflite"
+        "labels": "coco_labels.txt",
+        "tflite": "mobilenet_ssd_v2_coco_quant_postprocess.tflite",
+        "edgetpu": "mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite"
       },
       {
-        "name": "face_detection",
+        "name": "mobilenet_v2_face",
         "type": "video",
+        "entity": "face",
         "top_k": 2,
-        "labels": "${AMBIANIC_EDGE}/ai_models/coco_labels.txt",
-        "tflite": "${AMBIANIC_EDGE}/ai_models/mobilenet_ssd_v2_face_quant_postprocess.tflite"
+        "labels": "coco_labels.txt",
+        "tflite": "mobilenet_ssd_v2_face_quant_postprocess.tflite",
+        "edgetpu": "mobilenet_ssd_v2_face_quant_postprocess_edgetpu.tflite"
       }
     ],
     "pipelines": [
-      { "name": "camera1-pipeline", "source": "camera1", "type": "video", "action": "detect_object_action" },
-      { "name": "camera1-pipeline", "source": "detect_object_action", "type": "video", "action": "save_object_action" },
-      { "name": "camera1-pipeline", "source": "camera1", "type": "video", "action": "detect_face_action" },
-      { "name": "camera1-pipeline", "source": "detect_face_action", "type": "video", "action": "save_face_action" },
-      { "name": "camera2-pipeline", "source": "camera2", "type": "video", "action": "detect_object_action" },
-      { "name": "camera2-pipeline", "source": "detect_object_action", "type": "video", "action": "save_object_action" },
-      { "name": "camera2-pipeline", "source": "camera2", "type": "video", "action": "detect_face_action" },
-      { "name": "camera2-pipeline", "source": "detect_face_action", "type": "video", "action": "save_face_action" }
+      {
+        "name": "pipeline1",
+        "source": "camera1",
+        "type": "video",
+        "action": "detectObject"
+      },
+      {
+        "name": "pipeline1",
+        "type": "video",
+        "action": "saveObject"
+      },
+      {
+        "name": "pipeline1",
+        "source": "camera1",
+        "type": "video",
+        "action": "detectFace"
+      },
+      {
+        "name": "pipeline1",
+        "type": "video",
+        "action": "saveFace"
+      },
+      {
+        "name": "pipeline2",
+        "source": "camera2",
+        "type": "video",
+        "action": "detectObject"
+      },
+      {
+        "name": "pipeline2",
+        "type": "video",
+        "action": "saveObject"
+      },
+      {
+        "name": "pipeline2",
+        "source": "camera2",
+        "type": "video",
+        "action": "detectFace"
+      },
+      {
+        "name": "pipeline2",
+        "type": "video",
+        "action": "saveFace"
+      }
     ],
     "actions": [
       {
-        "name": "detect_object_action",
+        "name": "detectObject",
         "act": "detect",
         "type": "video",
         "entity": "object",
-        "ai_model": "entity_detection",
+        "ai_model": "mobilenet_v2_coco",
         "confidence": 0.6
       },
       {
-        "name": "save_object_action",
+        "name": "saveObject",
         "act": "save",
         "type": "video",
+        "entity": "object",
         "interval": 2,
         "idle": 600
       },
       {
-        "name": "detect_face_action",
+        "name": "detectFace",
         "act": "detect",
         "type": "video",
         "entity": "face",
-        "ai_model": "face_detection",
+        "ai_model": "mobilenet_v2_face",
         "confidence": 0.6
       },
       {
-        "name": "save_face_action",
+        "name": "saveFace",
         "act": "save",
         "type": "video",
+        "entity": "face",
         "interval": 2,
         "idle": 600
       }
@@ -98,14 +162,14 @@
     "sources": [
       {
         "name": "camera1",
-        "uri": "rtsp://username:password@192.168.1.221/live",
-        "type": "video",
+        "uri": "http://192.168.1.163/img/snapshot.cgi",
+        "type": "image",
         "live": true
       },
       {
         "name": "camera2",
-        "uri": "rtsp://username:password@192.168.1.222/live",
-        "type": "video",
+        "uri": "http://192.168.1.163/img/snapshot.cgi",
+        "type": "image",
         "live": true
       }
     ]
@@ -124,14 +188,16 @@
         "name": "str",
         "type": "list(video|audio)",
         "top_k": "int(1,100)?",
+        "entity": "str",
         "labels": "str",
-        "tflite": "str"
+        "tflite": "str",
+        "edgetpu": "str"
       }
     ],
     "pipelines": [
       {
         "name": "str?",
-        "source": "str",
+        "source": "str?",
         "type": "list(video|audio)",
         "action": "str?"
       }
@@ -142,7 +208,7 @@
         "act": "list(detect|save|send|publish)",
         "type": "list(video|audio)?",
         "payload": "list(mp4|jpeg|wav|json)?",
-        "entity": "list(object|face)?",
+        "entity": "list(object|face)",
         "ai_model": "str?",
         "confidence": "float?",
         "interval": "int?",
@@ -152,21 +218,21 @@
     "sources": [
       {
         "name": "str",
-        "type": "list(video|audio)",
-        "uri": "str?",
-        "live": "bool?",
+        "type": "list(video|image|audio)",
+        "uri": "str",
+        "live": "bool",
         "framerate": "int(2,30)?",
+        "refresh": "int(1,120)?",
         "duration": "int(1,60)?",
-        "output": "list(off|mp4)?",
         "quality": "int(1,100)?",
-        "rotate": "int?",
-        "height": "int?",
-        "width": "int?"
+        "rotate": "list(90|180|270)?",
+        "width": "int?",
+        "height": "int?"
       }
     ]
   },
   "environment": {
     "LOG_FORMAT": "{LEVEL}: {MESSAGE}"
   },
-  "image": "dcmartin/{arch}-addon-ambianic"
+  "image": "dcmartin/{arch}-addon-motion"
 }
