@@ -1,4 +1,4 @@
-# &#127916; `motion` configuration 
+# &#127916; `motion` Classic configuration 
 The `motion` add-on processes video information into motion detection JSON events, multi-frame GIF animations, and one representative frame with entities detected, classified, and annotated (n.b. requires Open Horizon `yolo4motion` service).  This addon is designed to work with a variety of sources, including:
 
 + `3GP` - motion-detecting WebCams (e.g. Linksys WCV80n); received via the `FTP` community _addon_
@@ -22,11 +22,18 @@ The _identifiers_ distinguish collections as well as individuals; camera identif
 + `mqtt.username` - credentials for access to broker; default: _none_
 + `mqtt.password` - credentials for access to broker; default: _none_
 
-## `cameras`
+## `cameras` **required**
 + `cameras[].name` - identifier for the camera; unique across _device_ and _group_; default: _none_
 + `cameras[].type` - `netcam`, `ftp`, `mqtt`; `local` is valid only for [motion-video0](http://github.com/dcmartin/addon-motion-video) version
++ `cameras[].w3w` - location of camera as three strings; from what3words.com; use `[]` for none
+
+## `cameras` _optional_
++ `cameras[].top` - top location of icon in percent (0-95)
++ `cameras[].left` - left location of icon in percent (0-95)
++ `cameras[].icon` - icon for camera from materialdesignicons.com (n.b. not including the `mdi:` component)
 + `cameras[].framerate` - number of frames per second to capture/attempt
 + `cameras[].threshold_percent` - pecentage of pixels changed; over-ride count with `threshold`
++ `cameras[].threshold` - number pixels changed
 
 ### Example
 ```
@@ -42,6 +49,7 @@ mqtt:
 cameras:
   - name: kelispond
     type: local
+    w3w: []
     framerate: 3
     threshold_percent: 1
 ```
@@ -57,6 +65,7 @@ require specific transports and associated attributes, e.g. credentials.  Exampl
 ```
   - name: shedcam
     type: netcam
+    w3w: []
     width: 640
     height: 480
     netcam_url: 'mjpeg://192.168.1.92:8090/1'
@@ -68,6 +77,7 @@ require specific transports and associated attributes, e.g. credentials.  Exampl
 ```
   - name: testcam
     type: netcam
+    w3w: []
     framerate: 3
     netcam_url: 'rtsp://192.168.93.3/live'
     threshold_percent: 1
@@ -79,6 +89,7 @@ require specific transports and associated attributes, e.g. credentials.  Exampl
 #### `HTTP`
 ```
   - name: road
+    w3w: []
     netcam_url: 'http://192.168.1.36:8081/img/video.mjpeg'
     type: netcam
     netcam_userpass: 'username:password'
@@ -90,86 +101,46 @@ require specific transports and associated attributes, e.g. credentials.  Exampl
 
 ```
   - name: backyard
+    w3w: []
     type: ftpd
     netcam_url: 'http://192.168.1.183/img/video.mjpeg'
     icon: texture-box
     netcam_userpass: '!secret netcam-userpass'
 ```
 
-# Example
+# Example (_subset_)
 
 ```
-log_level: info
-log_motion_level: error
-log_motion_type: ALL
-default:
-  post_pictures: best
-  interval: 30
-  despeckle: EedDl
-  changes: 'off'
-  text_scale: 1
-  framerate: 5
-  brightness: 100
-  contrast: 50
-  event_gap: 10
-  fov: 62
-  hue: 50
-  lightswitch: 0
-  palette: 15
-  picture_quality: 100
-  stream_quality: 100
-  threshold_percent: 10
-  saturation: 0
-  netcam_userpass: 'username:password'
-  username: username
-  password: password
-  height: 480
-  width: 640
-  movie_output: 'off'
-  movie_max: 15
-  movie_quality: 60
-mqtt:
-  host: mqtt.dcmartin.com
-  port: '1883'
-  username: username
-  password: password
+...
 group: motion
-device: netcams
-client: motion-local
+device: raspberrypi
+client: raspberrypi
 timezone: America/Los_Angeles
 cameras:
-  - name: poolcam
-    netcam_url: 'http://192.168.1.162/nphMotionJpeg?Resolution=640x480&Quality=Clarity'
+  - name: local
+    type: local
+    w3w: []
+    top: 50
+    left: 50
+    icon: webcam
+    width: 640
+    height: 480
+    framerate: 10
+    minimum_motion_frames: 30
+    event_gap: 60
+    threshold: 1000
+  - name: network
     type: netcam
-    icon: water
-    netcam_userpass: 'poolcamuser:poolcampass'
-  - name: interiorgate
-    netcam_url: 'http://192.168.1.38:8081/img/video.mjpeg'
-    type: netcam
-    icon: gate
-    netcam_userpass: 'interiorgateuser:interiorgatepass'
-  - name: road
-    netcam_url: 'http://192.168.1.36:8081/img/video.mjpeg'
-    type: netcam
-    icon: road
-    post_pictures: center
-    netcam_userpass: 'roaduser:roadpass'
-  - name: dogpond
-    type: netcam
-    icon: car
+    w3w:
+      - what
+      - three
+      - words
+    icon: door
     netcam_url: 'rtsp://192.168.1.224/live'
-    framerate: 2
+    netcam_userpass: 'username:password'
+    width: 640
+    height: 360
+    framerate: 5
+    event_gap: 30
     threshold_percent: 2
-  - name: pondview
-    type: netcam
-    icon: waves
-    netcam_url: 'rtsp://192.168.1.225/live'
-    framerate: 2
-    threshold_percent: 5
-  - name: shed
-    type: netcam
-    icon: window-shutter-open
-    netcam_url: 'rtsp://192.168.1.223/live'
-    framerate: 2
-    threshold_percent: 1
 ```

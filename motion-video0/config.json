@@ -1,10 +1,11 @@
 {
-  "name": "Motion Video0",
-  "version": "0.10.3",
+  "name": "Motion Classic",
+  "version": "0.10.14",
+  "stage": "stable",
   "slug": "motion-video0",
-  "description": "Motion addon with support for /dev/video0",
+  "description": "Classic Motion addon with support for local and remote video devices",
   "url": "https://github.com/dcmartin/addon-motion-video0/",
-  "webui": "http://[HOST]:[PORT:7999]/",
+  "webui": "http://[HOST]:[PORT:8080]/",
   "startup": "application",
   "boot": "auto",
   "arch": [
@@ -13,10 +14,8 @@
     "armv7"
   ],
   "ingress": true,
-  "ingress_port": 7999,
-  "devices": [
-    "/dev/video0:/dev/video0:rwm"
-  ],
+  "ingress_port": 8080,
+  "video": true,
   "audio": false,
   "hassio_api": true,
   "hassio_role": "default",
@@ -40,9 +39,9 @@
     "8090/tcp": 8090
   },
   "ports_description": {
-    "7999/tcp": "Web interface",
-    "8080/tcp": "Motion interface",
-    "8090/tcp": "Camera interface"
+    "7999/tcp": "Web UI and API",
+    "8080/tcp": "Motion UI and API",
+    "8090/tcp": "Camera stream"
   },
   "options": {
     "log_level": "info",
@@ -50,12 +49,13 @@
     "log_motion_type": "ALL",
     "default": {
       "changes": "on",
-      "event_gap": 30,
+      "event_gap": 5,
       "framerate": 5,
-      "minimum_motion_frames": 25,
+      "minimum_motion_frames": 5,
       "post_pictures": "best",
       "text_scale": 2,
       "threshold_percent": 2,
+      "threshold_maximum": 100000,
       "username": "!secret motioncam-username",
       "password": "!secret motioncam-password",
       "netcam_userpass": "!secret netcam-userpass",
@@ -69,13 +69,20 @@
       "password": "!secret mqtt-password"
     },
     "group": "motion",
-    "device": "hostname",
-    "client": "hostname",
+    "device": "raspberrypi",
+    "client": "raspberrypi",
     "timezone": "America/Los_Angeles",
     "cameras": [
       {
-        "name": "ps3eye",
-        "type": "local"
+        "name": "local",
+        "type": "local",
+        "icon": "cctv",
+        "width": 640,
+        "height": 480,
+        "framerate": 5,
+        "top": 50,
+        "left": 50,
+        "w3w": []
       }
     ]
   },
@@ -105,9 +112,10 @@
       "height": "int?",
       "hue": "int?",
       "interval": "int(60,86400)?",
-      "lightswitch": "int?",
+      "lightswitch_percent": "int(0,100)?",
+      "lightswitch_frames": "int(0,1000)?",
       "minimum_motion_frames": "int(1,300)?",
-      "movie_max": "int(1,300)?",
+      "movie_max": "int(1,120)?",
       "movie_output": "list(off|mp4|3gp|mpeg4|swf|flv|ffv1|mov|mkv|hevc)?",
       "movie_quality": "int(1,100)?",
       "netcam_userpass": "str?",
@@ -120,6 +128,7 @@
       "stream_quality": "int?",
       "text_scale": "int(1,10)?",
       "threshold": "int?",
+      "threshold_maximum": "int?",
       "threshold_percent": "int(0,100)?",
       "type": "list(local|netcam|ftpd|mqtt)?",
       "username": "str?",
@@ -142,8 +151,8 @@
         "icon": "str?",
         "lightswitch": "int?",
         "mac": "str?",
-        "mjpeg_url": "str?",
-        "movie_max": "int(1,60)?",
+        "mjpeg_url": "url?",
+        "movie_max": "int(1,120)?",
         "movie_output": "list(off|mp4|mpeg4|3gp)?",
         "movie_quality": "int(1,100)?",
         "netcam_url": "str?",
@@ -161,7 +170,14 @@
         "threshold_percent": "int(0,100)?",
         "username": "str?",
         "userpass": "str?",
-        "width": "int?"
+        "width": "int?",
+        "w3w": [
+          "str?",
+          "str?",
+          "str?"
+        ],
+        "top": "int?",
+        "left": "int?"
       }
     ],
     "mqtt": {
