@@ -1,0 +1,90 @@
+{ 
+  "name": "Horizon Control",
+  "url": "https://github.com/dcmartin/hassio-addons/tree/master/horizon",
+  "version": "0.1.111",
+  "slug": "horizon",
+  "description": "Control UX for Open Horizon (http://github.com/dcmartin/open-horizon)",
+  "startup": "before",
+  "boot": "auto",
+  "arch": [
+    "aarch64",
+    "amd64",
+    "armhf",
+    "i386"
+  ],
+  "webui": "http://[HOST]:[PORT:9999]/",
+  "hassio_role": "default",
+  "hassio_api": true,
+  "homeassistant_api": true,
+  "host_network": true,
+  "privileged": [
+    "NET_ADMIN",
+    "SYS_ADMIN"
+  ],
+  "timeout": 90,
+  "tmpfs": true,
+  "ports": {
+    "9999/tcp": 9999
+  },
+  "map": [
+    "share:rw",
+    "config:rw"
+  ],
+  "options": {
+    "log_level": "info",
+    "listen": "only",
+    "timezone": "America/Los_Angeles",
+    "unit_system": "imperial",
+    "latitude": 16.775532,
+    "longitude": -3.005361,
+    "elevation": 0,
+    "refresh": 300,
+    "mqtt": {
+      "host": "core-mosquitto",
+      "port": 1883
+    },
+    "cloudant": {
+      "url": "",
+      "username": "",
+      "password": ""
+    },
+    "horizon": {
+      "device": "",
+      "org": "",
+      "apikey": "",
+      "url": "https://alpha.edge-fabric.com/v1",
+      "config": ""
+    }
+  },
+  "schema": {
+    "log_level": "match(^(trace|debug|info|notice|warning|error|fatal)$)",
+    "listen": "match(^(true|false|only)$)?",
+    "timezone": "str?",
+    "unit_system": "match(^(imperial|metric)$)?",
+    "latitude": "float?",
+    "longitude": "float?",
+    "elevation": "int?",
+    "refresh": "int?",
+    "cloudant": {
+      "url": "url",
+      "username": "str",
+      "password": "str"
+    },
+    "mqtt": {
+      "host": "str",
+      "port": "port?",
+      "username": "str?",
+      "password": "str?"
+    },
+    "horizon": {
+      "device": "str",
+      "org": "str",
+      "apikey": "str",
+      "url": "url",
+      "config": "str?"
+    }
+  },
+  "environment": {
+    "LOG_FORMAT": "{LEVEL}: {MESSAGE}"
+  }
+}
